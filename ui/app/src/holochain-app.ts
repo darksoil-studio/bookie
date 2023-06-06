@@ -1,14 +1,24 @@
-import { fileStorageClientContext, FileStorageClient } from '@holochain-open-dev/file-storage';
+import {
+  fileStorageClientContext,
+  FileStorageClient,
+} from '@holochain-open-dev/file-storage';
 
-import { bookieStoreContext, BookieStore, BookieClient } from 'lib';
-
+import {
+  bookieStoreContext,
+  BookieStore,
+  BookieClient,
+} from '@darksoil/bookie';
 
 // Replace 'ligth.css' with 'dark.css' if you want the dark theme
 import '@shoelace-style/shoelace/dist/themes/light.css';
 
 import { LitElement, css, html } from 'lit';
 import { property, state, customElement } from 'lit/decorators.js';
-import { AppAgentWebsocket, AppAgentClient, ActionHash } from '@holochain/client';
+import {
+  AppAgentWebsocket,
+  AppAgentClient,
+  ActionHash,
+} from '@holochain/client';
 import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
 import { sharedStyles } from '@holochain-open-dev/elements';
 import { provide } from '@lit-labs/context';
@@ -17,7 +27,7 @@ import {
   Profile,
   ProfilesClient,
   ProfilesStore,
-  profilesStoreContext
+  profilesStoreContext,
 } from '@holochain-open-dev/profiles';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -36,11 +46,11 @@ export class HolochainApp extends LitElement {
   @property()
   _fileStorageClient!: FileStorageClient;
 
-@provide({ context: bookieStoreContext })
+  @provide({ context: bookieStoreContext })
   @property()
   _bookieStore!: BookieStore;
 
-@state() _loading = true;
+  @state() _loading = true;
 
   @state() _view = { view: 'main' };
 
@@ -62,36 +72,41 @@ export class HolochainApp extends LitElement {
 
   async initStores(appAgentClient: AppAgentClient) {
     // Don't change this
-    this._profilesStore = new ProfilesStore(new ProfilesClient(appAgentClient, 'bookie'));
-    this._myProfile = new StoreSubscriber(this, () => this._profilesStore.myProfile);
-    this._bookieStore = new BookieStore(new BookieClient(appAgentClient, 'bookie'));
+    this._profilesStore = new ProfilesStore(
+      new ProfilesClient(appAgentClient, 'bookie')
+    );
+    this._myProfile = new StoreSubscriber(
+      this,
+      () => this._profilesStore.myProfile
+    );
+    this._bookieStore = new BookieStore(
+      new BookieClient(appAgentClient, 'bookie')
+    );
     this._fileStorageClient = new FileStorageClient(appAgentClient, 'bookie');
-}
+  }
 
   renderMyProfile() {
     switch (this._myProfile.value.status) {
-      case 'pending': 
+      case 'pending':
         return html`<profile-list-item-skeleton></profile-list-item-skeleton>`;
       case 'complete':
         const profile = this._myProfile.value.value;
         if (!profile) return html``;
-        
+
         return html`<div
-              class="row"
-              style="align-items: center;"
-              slot="actionItems"
-            >
-              <agent-avatar
-                .agentPubKey=${this._client.myPubKey}
-              ></agent-avatar>
-              <span style="margin: 0 16px;">${profile?.nickname}</span>
-            </div>`;
+          class="row"
+          style="align-items: center;"
+          slot="actionItems"
+        >
+          <agent-avatar .agentPubKey=${this._client.myPubKey}></agent-avatar>
+          <span style="margin: 0 16px;">${profile?.nickname}</span>
+        </div>`;
       case 'error':
-        return html`<display-error 
-            .headline=${msg("Error fetching the profile")}
-            .error=${this._myProfile.value.error.data.data} 
-            tooltip
-          ></display-error>`;
+        return html`<display-error
+          .headline=${msg('Error fetching the profile')}
+          .error=${this._myProfile.value.error.data.data}
+          tooltip
+        ></display-error>`;
     }
   }
 
@@ -99,14 +114,16 @@ export class HolochainApp extends LitElement {
   renderContent() {
     return html``;
   }
-  
+
   renderBackButton() {
     if (this._view.view === 'main') return html``;
 
     return html`
       <sl-icon-button
         name="arrow-left"
-        @click=${() => { this._view = { view: 'main' } } }
+        @click=${() => {
+          this._view = { view: 'main' };
+        }}
       ></sl-icon-button>
     `;
   }
@@ -117,7 +134,7 @@ export class HolochainApp extends LitElement {
         class="row"
         style="flex: 1; height: 100%; align-items: center; justify-content: center;"
       >
-	<sl-spinner style="font-size: 2rem"></sl-spinner>
+        <sl-spinner style="font-size: 2rem"></sl-spinner>
       </div>`;
 
     return html`
@@ -127,11 +144,11 @@ export class HolochainApp extends LitElement {
           style="align-items: center; color:white; background-color: var(--sl-color-primary-900); padding: 16px"
         >
           ${this.renderBackButton()}
-          <span class="title" style="flex: 1">${msg("Bookie")}</span>
+          <span class="title" style="flex: 1">${msg('Bookie')}</span>
 
           ${this.renderMyProfile()}
         </div>
-        
+
         <profile-prompt style="flex: 1;">
           ${this.renderContent()}
         </profile-prompt>
@@ -147,5 +164,5 @@ export class HolochainApp extends LitElement {
       }
     `,
     sharedStyles,
-  ];}
-
+  ];
+}
