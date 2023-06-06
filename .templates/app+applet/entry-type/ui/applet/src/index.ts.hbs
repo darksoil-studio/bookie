@@ -1,0 +1,21 @@
+import 'lib/dist/{{dna_role_name}}/{{kebab_case coordinator_zome_manifest.name}}/elements/{{kebab_case entry_type.name}}-detail.js';
+
+{{#merge_scope previous_file_content (concat (snake_case coordinator_zome_manifest.name) "_integrity: {" ) }}
+    {{snake_case entry_type.name}}: {
+      info: async (hrl: Hrl) => ({
+        name: '',
+        icon_src: ''
+      }),
+      view: (element: HTMLElement, hrl: Hrl, context: any) =>
+        render(
+          wrap{{pascal_case coordinator_zome_manifest.name}}AppletView(
+            client,
+            profilesClient,
+            weServices,
+            html` <{{kebab_case entry_type.name}}-detail .{{camel_case entry_type.name}}Hash=${hrl[1]}></{{kebab_case entry_type.name}}-detail> `
+          ),
+        element
+      ),
+    },
+    {{previous_scope_content}}
+{{/merge_scope}}
