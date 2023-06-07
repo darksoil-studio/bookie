@@ -4,7 +4,11 @@ import { AgentPubKey, EntryHash, ActionHash, Record } from '@holochain/client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit-labs/context';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import {
+  hashProperty,
+  sharedStyles,
+  wrapPathInSvg,
+} from '@holochain-open-dev/elements';
 import { mdiInformationOutline } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -21,11 +25,6 @@ import { bookieStoreContext } from '../context.js';
 @localized()
 @customElement('my-resources')
 export class MyResources extends LitElement {
-
-  // REQUIRED. The author for which the Resources should be fetched
-  @property(hashProperty('author'))
-  author!: AgentPubKey;
-  
   /**
    * @internal
    */
@@ -35,32 +34,33 @@ export class MyResources extends LitElement {
   /**
    * @internal
    */
-  _myResources = new StoreSubscriber(this, 
-    () => this.bookieStore.myResources.get(this.author),
-    () => [this.author]
+  _myResources = new StoreSubscriber(
+    this,
+    () =>
+      this.bookieStore.myResources.get(this.bookieStore.client.client.myPubKey),
+    () => []
   );
 
-  firstUpdated() {
-    if (this.author === undefined) {
-      throw new Error(`The author property is required for the MyResources element`);
-    }
-  }
-
   renderList(hashes: Array<ActionHash>) {
-    if (hashes.length === 0) 
+    if (hashes.length === 0)
       return html` <div class="column center-content">
         <sl-icon
           .src=${wrapPathInSvg(mdiInformationOutline)}
           style="color: grey; height: 64px; width: 64px; margin-bottom: 16px"
-          ></sl-icon
-        >
-        <span class="placeholder">${msg("No resources found")}</span>
+        ></sl-icon>
+        <span class="placeholder">${msg('No resources found')}</span>
       </div>`;
 
     return html`
-      <div style="display: flex; flex-direction: column; flex: 1">
-        ${hashes.map(hash => 
-          html`<resource-summary .resourceHash=${hash} style="margin-bottom: 16px;"></resource-summary>`
+      <div
+        style="display: flex; flex-direction: row; flex-wrap: wrap; margin: 16px"
+      >
+        ${hashes.map(
+          hash =>
+            html`<resource-summary
+              .resourceHash=${hash}
+              style="margin-bottom: 16px; margin-right: 16px"
+            ></resource-summary>`
         )}
       </div>
     `;
@@ -68,21 +68,21 @@ export class MyResources extends LitElement {
 
   render() {
     switch (this._myResources.value.status) {
-      case "pending":
+      case 'pending':
         return html`<div
           style="display: flex; flex: 1; align-items: center; justify-content: center"
         >
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
-      case "complete":
+      case 'complete':
         return this.renderList(this._myResources.value.value);
-      case "error":
+      case 'error':
         return html`<display-error
-          .headline=${msg("Error fetching the resources")}
+          .headline=${msg('Error fetching the resources')}
           .error=${this._myResources.value.error.data.data}
         ></display-error>`;
     }
   }
-  
+
   static styles = [sharedStyles];
 }

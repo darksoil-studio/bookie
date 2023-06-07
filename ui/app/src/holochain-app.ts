@@ -20,7 +20,7 @@ import {
   ActionHash,
 } from '@holochain/client';
 import { AsyncStatus, StoreSubscriber } from '@holochain-open-dev/stores';
-import { sharedStyles } from '@holochain-open-dev/elements';
+import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
 import { provide } from '@lit-labs/context';
 import { localized, msg } from '@lit/localize';
 import {
@@ -37,7 +37,15 @@ import '@holochain-open-dev/profiles/dist/elements/profile-list-item-skeleton.js
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
 
-type View = { view: 'main' };
+import '@darksoil/bookie/dist/elements/main-dashboard.js';
+import '@darksoil/bookie/dist/elements/resource-detail.js';
+import '@darksoil/bookie/dist/elements/booking-request-detail.js';
+import { mdiArrowLeft } from '@mdi/js';
+
+type View =
+  | { view: 'main' }
+  | { view: 'resource_detail'; resourceHash: ActionHash }
+  | { view: 'booking_request_detail'; bookingRequestHash: ActionHash };
 
 @localized()
 @customElement('holochain-app')
@@ -52,7 +60,7 @@ export class HolochainApp extends LitElement {
 
   @state() _loading = true;
 
-  @state() _view = { view: 'main' };
+  @state() _view: View = { view: 'main' };
 
   @provide({ context: profilesStoreContext })
   @property()
@@ -110,9 +118,40 @@ export class HolochainApp extends LitElement {
     }
   }
 
-  // TODO: add here the content of your application
   renderContent() {
-    return html``;
+    if (this._view.view === 'resource_detail')
+      return html`<resource-detail
+        .resourceHash=${this._view.resourceHash}
+        style="flex: 1"
+        @booking-request-selected=${(e: CustomEvent) => {
+          this._view = {
+            view: 'booking_request_detail',
+            bookingRequestHash: e.detail.bookingRequestHash,
+          };
+        }}
+      ></resource-detail>`;
+    if (this._view.view === 'booking_request_detail')
+      return html`<booking-request-detail
+        .bookingRequestHash=${this._view.bookingRequestHash}
+        style="flex: 1"
+      ></booking-request-detail>`;
+
+    return html`
+      <main-dashboard
+        @resource-selected=${(e: CustomEvent) => {
+          this._view = {
+            view: 'resource_detail',
+            resourceHash: e.detail.resourceHash,
+          };
+        }}
+        @booking-request-selected=${(e: CustomEvent) => {
+          this._view = {
+            view: 'booking_request_detail',
+            bookingRequestHash: e.detail.bookingRequestHash,
+          };
+        }}
+      ></main-dashboard>
+    `;
   }
 
   renderBackButton() {
@@ -120,10 +159,11 @@ export class HolochainApp extends LitElement {
 
     return html`
       <sl-icon-button
-        name="arrow-left"
+        .src=${wrapPathInSvg(mdiArrowLeft)}
         @click=${() => {
           this._view = { view: 'main' };
         }}
+        style="color: white; margin-right: 16px"
       ></sl-icon-button>
     `;
   }

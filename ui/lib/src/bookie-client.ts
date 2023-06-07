@@ -4,19 +4,22 @@ import { BookingRequest } from './types';
 
 import { Resource } from './types';
 
-import { 
-  AppAgentClient, 
-  Record, 
-  ActionHash, 
-  EntryHash, 
+import {
+  AppAgentClient,
+  Record,
+  ActionHash,
   AgentPubKey,
 } from '@holochain/client';
-import { isSignalFromCellWithRole, EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
+import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
 
 import { BookieSignal } from './types.js';
 
 export class BookieClient extends ZomeClient<BookieSignal> {
-  constructor(public client: AppAgentClient, public roleName: string, public zomeName = 'bookie') {
+  constructor(
+    public client: AppAgentClient,
+    public roleName: string,
+    public zomeName = 'bookie'
+  ) {
     super(client, roleName, zomeName);
   }
   /** Resource */
@@ -25,8 +28,10 @@ export class BookieClient extends ZomeClient<BookieSignal> {
     const record: Record = await this.callZome('create_resource', resource);
     return new EntryRecord(record);
   }
-  
-  async getResource(resourceHash: ActionHash): Promise<EntryRecord<Resource> | undefined> {
+
+  async getResource(
+    resourceHash: ActionHash
+  ): Promise<EntryRecord<Resource> | undefined> {
     const record: Record = await this.callZome('get_resource', resourceHash);
     return record ? new EntryRecord(record) : undefined;
   }
@@ -35,40 +40,70 @@ export class BookieClient extends ZomeClient<BookieSignal> {
     return this.callZome('delete_resource', originalResourceHash);
   }
 
-  async updateResource(originalResourceHash: ActionHash, previousResourceHash: ActionHash, updatedResource: Resource): Promise<EntryRecord<Resource>> {
+  async updateResource(
+    originalResourceHash: ActionHash,
+    previousResourceHash: ActionHash,
+    updatedResource: Resource
+  ): Promise<EntryRecord<Resource>> {
     const record: Record = await this.callZome('update_resource', {
       original_resource_hash: originalResourceHash,
       previous_resource_hash: previousResourceHash,
-      updated_resource: updatedResource
+      updated_resource: updatedResource,
     });
     return new EntryRecord(record);
   }
   /** Booking Request */
 
-  async createBookingRequest(bookingRequest: BookingRequest): Promise<EntryRecord<BookingRequest>> {
-    const record: Record = await this.callZome('create_booking_request', bookingRequest);
+  async createBookingRequest(
+    bookingRequest: BookingRequest
+  ): Promise<EntryRecord<BookingRequest>> {
+    const record: Record = await this.callZome(
+      'create_booking_request',
+      bookingRequest
+    );
     return new EntryRecord(record);
   }
-  
-  async getBookingRequest(bookingRequestHash: ActionHash): Promise<EntryRecord<BookingRequest> | undefined> {
-    const record: Record = await this.callZome('get_booking_request', bookingRequestHash);
+
+  async getBookingRequest(
+    bookingRequestHash: ActionHash
+  ): Promise<EntryRecord<BookingRequest> | undefined> {
+    const record: Record = await this.callZome(
+      'get_booking_request',
+      bookingRequestHash
+    );
     return record ? new EntryRecord(record) : undefined;
   }
 
-  deleteBookingRequest(originalBookingRequestHash: ActionHash): Promise<ActionHash> {
-    return this.callZome('delete_booking_request', originalBookingRequestHash);
+  cancelBookingRequest(
+    originalBookingRequestHash: ActionHash
+  ): Promise<ActionHash> {
+    return this.callZome('cancel_booking_request', originalBookingRequestHash);
   }
 
-  async updateBookingRequest(previousBookingRequestHash: ActionHash, updatedBookingRequest: BookingRequest): Promise<EntryRecord<BookingRequest>> {
+  rejectBookingRequest(
+    originalBookingRequestHash: ActionHash
+  ): Promise<ActionHash> {
+    return this.callZome('reject_booking_request', originalBookingRequestHash);
+  }
+
+  async updateBookingRequest(
+    previousBookingRequestHash: ActionHash,
+    updatedBookingRequest: BookingRequest
+  ): Promise<EntryRecord<BookingRequest>> {
     const record: Record = await this.callZome('update_booking_request', {
       previous_booking_request_hash: previousBookingRequestHash,
-      updated_booking_request: updatedBookingRequest
+      updated_booking_request: updatedBookingRequest,
     });
     return new EntryRecord(record);
   }
-  
-  async getBookingRequestsForResource(resourceHash: ActionHash): Promise<Array<EntryRecord<BookingRequest>>> {
-    const records: Record[] = await this.callZome('get_booking_requests_for_resource', resourceHash);
+
+  async getBookingRequestsForResource(
+    resourceHash: ActionHash
+  ): Promise<Array<EntryRecord<BookingRequest>>> {
+    const records: Record[] = await this.callZome(
+      'get_booking_requests_for_resource',
+      resourceHash
+    );
     return records.map(r => new EntryRecord(r));
   }
   /** Booking */
@@ -77,8 +112,10 @@ export class BookieClient extends ZomeClient<BookieSignal> {
     const record: Record = await this.callZome('create_booking', booking);
     return new EntryRecord(record);
   }
-  
-  async getBooking(bookingHash: ActionHash): Promise<EntryRecord<Booking> | undefined> {
+
+  async getBooking(
+    bookingHash: ActionHash
+  ): Promise<EntryRecord<Booking> | undefined> {
     const record: Record = await this.callZome('get_booking', bookingHash);
     return record ? new EntryRecord(record) : undefined;
   }
@@ -87,21 +124,34 @@ export class BookieClient extends ZomeClient<BookieSignal> {
     return this.callZome('delete_booking', originalBookingHash);
   }
 
-  async updateBooking(previousBookingHash: ActionHash, updatedBooking: Booking): Promise<EntryRecord<Booking>> {
+  async updateBooking(
+    previousBookingHash: ActionHash,
+    updatedBooking: Booking
+  ): Promise<EntryRecord<Booking>> {
     const record: Record = await this.callZome('update_booking', {
       previous_booking_hash: previousBookingHash,
-      updated_booking: updatedBooking
+      updated_booking: updatedBooking,
     });
     return new EntryRecord(record);
   }
-  
-  async getBookingsForBookingRequest(bookingRequestHash: ActionHash): Promise<Array<EntryRecord<Booking>>> {
-    const records: Record[] = await this.callZome('get_bookings_for_booking_request', bookingRequestHash);
+
+  async getBookingsForBookingRequest(
+    bookingRequestHash: ActionHash
+  ): Promise<Array<EntryRecord<Booking>>> {
+    const records: Record[] = await this.callZome(
+      'get_bookings_for_booking_request',
+      bookingRequestHash
+    );
     return records.map(r => new EntryRecord(r));
   }
 
-  async getBookingsForResource(resourceHash: ActionHash): Promise<Array<EntryRecord<Booking>>> {
-    const records: Record[] = await this.callZome('get_bookings_for_resource', resourceHash);
+  async getBookingsForResource(
+    resourceHash: ActionHash
+  ): Promise<Array<EntryRecord<Booking>>> {
+    const records: Record[] = await this.callZome(
+      'get_bookings_for_resource',
+      resourceHash
+    );
     return records.map(r => new EntryRecord(r));
   }
 
@@ -114,16 +164,20 @@ export class BookieClient extends ZomeClient<BookieSignal> {
 
   /** My Resources */
 
-  async getMyResources(author: AgentPubKey): Promise<Array<EntryRecord<Resource>>> {
+  async getMyResources(
+    author: AgentPubKey
+  ): Promise<Array<EntryRecord<Resource>>> {
     const records: Record[] = await this.callZome('get_my_resources', author);
     return records.map(r => new EntryRecord(r));
   }
 
   /** My Booking Requests */
 
-  async getMyBookingRequests(author: AgentPubKey): Promise<Array<EntryRecord<BookingRequest>>> {
-    const records: Record[] = await this.callZome('get_my_booking_requests', author);
+  async getMyBookingRequests(): Promise<Array<EntryRecord<BookingRequest>>> {
+    const records: Record[] = await this.callZome(
+      'get_my_booking_requests',
+      null
+    );
     return records.map(r => new EntryRecord(r));
   }
-
 }

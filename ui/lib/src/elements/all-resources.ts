@@ -4,7 +4,11 @@ import { AgentPubKey, EntryHash, ActionHash, Record } from '@holochain/client';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import { consume } from '@lit-labs/context';
 import { localized, msg } from '@lit/localize';
-import { hashProperty, sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import {
+  hashProperty,
+  sharedStyles,
+  wrapPathInSvg,
+} from '@holochain-open-dev/elements';
 import { mdiInformationOutline } from '@mdi/js';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -21,7 +25,6 @@ import { bookieStoreContext } from '../context.js';
 @localized()
 @customElement('all-resources')
 export class AllResources extends LitElement {
-  
   /**
    * @internal
    */
@@ -31,25 +34,31 @@ export class AllResources extends LitElement {
   /**
    * @internal
    */
-  _allResources = new StoreSubscriber(this, 
-    () => this.bookieStore.allResources  );
-
+  _allResources = new StoreSubscriber(
+    this,
+    () => this.bookieStore.allResources
+  );
 
   renderList(hashes: Array<ActionHash>) {
-    if (hashes.length === 0) 
-      return html` <div class="column center-content">
+    if (hashes.length === 0)
+      return html` <div class="column center-content" style="margin: 16px">
         <sl-icon
           .src=${wrapPathInSvg(mdiInformationOutline)}
           style="color: grey; height: 64px; width: 64px; margin-bottom: 16px"
-          ></sl-icon
-        >
-        <span class="placeholder">${msg("No resources found")}</span>
+        ></sl-icon>
+        <span class="placeholder">${msg('No resources found')}</span>
       </div>`;
 
     return html`
-      <div style="display: flex; flex-direction: column; flex: 1">
-        ${hashes.map(hash => 
-          html`<resource-summary .resourceHash=${hash} style="margin-bottom: 16px;"></resource-summary>`
+      <div
+        style="display: flex; flex-direction: row; flex-wrap: wrap; margin: 16px"
+      >
+        ${hashes.map(
+          hash =>
+            html`<resource-summary
+              .resourceHash=${hash}
+              style="margin-bottom: 16px;"
+            ></resource-summary>`
         )}
       </div>
     `;
@@ -57,21 +66,21 @@ export class AllResources extends LitElement {
 
   render() {
     switch (this._allResources.value.status) {
-      case "pending":
+      case 'pending':
         return html`<div
           style="display: flex; flex: 1; align-items: center; justify-content: center"
         >
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
-      case "complete":
+      case 'complete':
         return this.renderList(this._allResources.value.value);
-      case "error":
+      case 'error':
         return html`<display-error
-          .headline=${msg("Error fetching the resources")}
+          .headline=${msg('Error fetching the resources')}
           .error=${this._allResources.value.error.data.data}
         ></display-error>`;
     }
   }
-  
+
   static styles = [sharedStyles];
 }

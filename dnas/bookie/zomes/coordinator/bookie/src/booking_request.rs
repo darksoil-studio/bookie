@@ -1,22 +1,19 @@
-use hdk::prelude::*;
 use bookie_integrity::*;
+use hdk::prelude::*;
 #[hdk_extern]
 pub fn create_booking_request(booking_request: BookingRequest) -> ExternResult<Record> {
-    let booking_request_hash = create_entry(
-        &EntryTypes::BookingRequest(booking_request.clone()),
-    )?;
+    let booking_request_hash = create_entry(&EntryTypes::BookingRequest(booking_request.clone()))?;
     create_link(
         booking_request.resource_hash.clone(),
         booking_request_hash.clone(),
         LinkTypes::ResourceToBookingRequests,
         (),
     )?;
-    let record = get(booking_request_hash.clone(), GetOptions::default())?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Could not find the newly created BookingRequest"))
-            ),
-        )?;
+    let record = get(booking_request_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+        WasmErrorInner::Guest(String::from(
+            "Could not find the newly created BookingRequest"
+        ))
+    ))?;
     let my_agent_pub_key = agent_info()?.agent_latest_pubkey;
     create_link(
         my_agent_pub_key,
@@ -32,15 +29,14 @@ pub fn get_booking_request(
 ) -> ExternResult<Option<Record>> {
     get_latest_booking_request(original_booking_request_hash)
 }
-fn get_latest_booking_request(
-    booking_request_hash: ActionHash,
-) -> ExternResult<Option<Record>> {
-    let details = get_details(booking_request_hash, GetOptions::default())?
-        .ok_or(wasm_error!(WasmErrorInner::Guest("BookingRequest not found".into())))?;
+fn get_latest_booking_request(booking_request_hash: ActionHash) -> ExternResult<Option<Record>> {
+    let details = get_details(booking_request_hash, GetOptions::default())?.ok_or(wasm_error!(
+        WasmErrorInner::Guest("BookingRequest not found".into())
+    ))?;
     let record_details = match details {
-        Details::Entry(_) => {
-            Err(wasm_error!(WasmErrorInner::Guest("Malformed details".into())))
-        }
+        Details::Entry(_) => Err(wasm_error!(WasmErrorInner::Guest(
+            "Malformed details".into()
+        ))),
         Details::Record(record_details) => Ok(record_details),
     }?;
     if record_details.deletes.len() > 0 {
@@ -62,31 +58,43 @@ pub fn update_booking_request(input: UpdateBookingRequestInput) -> ExternResult<
         input.previous_booking_request_hash,
         &input.updated_booking_request,
     )?;
-    let record = get(updated_booking_request_hash.clone(), GetOptions::default())?
-        .ok_or(
-            wasm_error!(
-                WasmErrorInner::Guest(String::from("Could not find the newly updated BookingRequest"))
-            ),
-        )?;
+    let record = get(updated_booking_request_hash.clone(), GetOptions::default())?.ok_or(
+        wasm_error!(WasmErrorInner::Guest(String::from(
+            "Could not find the newly updated BookingRequest"
+        ))),
+    )?;
     Ok(record)
 }
 #[hdk_extern]
-pub fn delete_booking_request(
-    original_booking_request_hash: ActionHash,
-) -> ExternResult<ActionHash> {
-    delete_entry(original_booking_request_hash)
+pub fn reject_booking_request(original_booking_request_hash: ActionHash) -> ExternResult<()> {
+    delete_entry(original_booking_request_hash.clone())?;
+
+    remove_booking_request_for_resource(original_booking_request_hash)
 }
+
 #[hdk_extern]
-pub fn get_booking_requests_for_resource(
-    resource_hash: ActionHash,
-) -> ExternResult<Vec<Record>> {
+pub fn cancel_booking_request(original_booking_request_hash: ActionHash) -> ExternResult<()> {
+    delete_entry(original_booking_request_hash.clone())?;
+
+    let my_pub_key = agent_info()?.agent_latest_pubkey;
+
+    let links = get_links(my_pub_key, LinkTypes::MyBookingRequests, None)?;
+
+    for link in links {
+        if ActionHash::from(link.target.clone()).eq(&original_booking_request_hash) {
+            delete_link(link.create_link_hash)?;
+        }
+    }
+
+    remove_booking_request_for_resource(original_booking_request_hash)
+}
+
+#[hdk_extern]
+pub fn get_booking_requests_for_resource(resource_hash: ActionHash) -> ExternResult<Vec<Record>> {
     let links = get_links(resource_hash, LinkTypes::ResourceToBookingRequests, None)?;
     let get_input: Vec<GetInput> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
-            GetOptions::default(),
-        ))
+        .map(|link| GetInput::new(ActionHash::from(link.target).into(), GetOptions::default()))
         .collect();
     let records: Vec<Record> = HDK
         .with(|hdk| hdk.borrow().get(get_input))?
@@ -94,4 +102,29 @@ pub fn get_booking_requests_for_resource(
         .filter_map(|r| r)
         .collect();
     Ok(records)
+}
+
+pub fn remove_booking_request_for_resource(
+    original_booking_request_hash: ActionHash,
+) -> ExternResult<()> {
+    let record =
+        get(original_booking_request_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
+            WasmErrorInner::Guest(String::from("Booking Request was not found"))
+        ))?;
+
+    let booking_request = BookingRequest::try_from(record)?;
+
+    let links = get_links(
+        booking_request.resource_hash.clone(),
+        LinkTypes::ResourceToBookingRequests,
+        None,
+    )?;
+
+    for link in links {
+        if ActionHash::from(link.target.clone()).eq(&original_booking_request_hash) {
+            delete_link(link.create_link_hash)?;
+        }
+    }
+
+    Ok(())
 }
