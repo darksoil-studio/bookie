@@ -46,7 +46,7 @@ export class AllResources extends LitElement {
           .src=${wrapPathInSvg(mdiInformationOutline)}
           style="color: grey; height: 64px; width: 64px; margin-bottom: 16px"
         ></sl-icon>
-        <span class="placeholder">${msg('No resources found')}</span>
+        <span class="placeholder">${msg('No resources found.')}</span>
       </div>`;
 
     return html`
@@ -57,7 +57,7 @@ export class AllResources extends LitElement {
           hash =>
             html`<resource-summary
               .resourceHash=${hash}
-              style="margin-bottom: 16px;"
+              style="margin-right: 16px;"
             ></resource-summary>`
         )}
       </div>

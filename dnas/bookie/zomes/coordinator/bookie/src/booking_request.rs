@@ -23,11 +23,34 @@ pub fn create_booking_request(booking_request: BookingRequest) -> ExternResult<R
     )?;
     Ok(record)
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GetBookingRequestOutput {
+    booking_request: Record,
+    deletes: Vec<SignedActionHashed>,
+}
+
 #[hdk_extern]
 pub fn get_booking_request(
     original_booking_request_hash: ActionHash,
-) -> ExternResult<Option<Record>> {
-    get_latest_booking_request(original_booking_request_hash)
+) -> ExternResult<Option<GetBookingRequestOutput>> {
+    let Some(booking_request) = get_latest_booking_request(original_booking_request_hash.clone())? else {
+        return Ok(None);
+    };
+    let details = get_details(original_booking_request_hash, GetOptions::default())?.ok_or(
+        wasm_error!(WasmErrorInner::Guest("BookingRequest not found".into())),
+    )?;
+    let record_details = match details {
+        Details::Entry(_) => Err(wasm_error!(WasmErrorInner::Guest(
+            "Malformed details".into()
+        ))),
+        Details::Record(record_details) => Ok(record_details),
+    }?;
+
+    Ok(Some(GetBookingRequestOutput {
+        booking_request,
+        deletes: record_details.deletes,
+    }))
 }
 fn get_latest_booking_request(booking_request_hash: ActionHash) -> ExternResult<Option<Record>> {
     let details = get_details(booking_request_hash, GetOptions::default())?.ok_or(wasm_error!(
@@ -39,9 +62,6 @@ fn get_latest_booking_request(booking_request_hash: ActionHash) -> ExternResult<
         ))),
         Details::Record(record_details) => Ok(record_details),
     }?;
-    if record_details.deletes.len() > 0 {
-        return Ok(None);
-    }
     match record_details.updates.last() {
         Some(update) => get_latest_booking_request(update.action_address().clone()),
         None => Ok(Some(record_details.record)),
@@ -67,15 +87,14 @@ pub fn update_booking_request(input: UpdateBookingRequestInput) -> ExternResult<
 }
 #[hdk_extern]
 pub fn reject_booking_request(original_booking_request_hash: ActionHash) -> ExternResult<()> {
+    remove_booking_request_for_resource(original_booking_request_hash.clone())?;
     delete_entry(original_booking_request_hash.clone())?;
 
-    remove_booking_request_for_resource(original_booking_request_hash)
+    Ok(())
 }
 
 #[hdk_extern]
 pub fn cancel_booking_request(original_booking_request_hash: ActionHash) -> ExternResult<()> {
-    delete_entry(original_booking_request_hash.clone())?;
-
     let my_pub_key = agent_info()?.agent_latest_pubkey;
 
     let links = get_links(my_pub_key, LinkTypes::MyBookingRequests, None)?;
@@ -86,7 +105,10 @@ pub fn cancel_booking_request(original_booking_request_hash: ActionHash) -> Exte
         }
     }
 
-    remove_booking_request_for_resource(original_booking_request_hash)
+    remove_booking_request_for_resource(original_booking_request_hash.clone())?;
+    delete_entry(original_booking_request_hash.clone())?;
+
+    Ok(())
 }
 
 #[hdk_extern]

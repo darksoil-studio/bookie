@@ -9,7 +9,9 @@ import {
   Record,
   ActionHash,
   AgentPubKey,
+  SignedActionHashed,
 } from '@holochain/client';
+import { RecordDetails } from '@holochain-open-dev/core-types';
 import { EntryRecord, ZomeClient } from '@holochain-open-dev/utils';
 
 import { BookieSignal } from './types.js';
@@ -64,14 +66,23 @@ export class BookieClient extends ZomeClient<BookieSignal> {
     return new EntryRecord(record);
   }
 
-  async getBookingRequest(
-    bookingRequestHash: ActionHash
-  ): Promise<EntryRecord<BookingRequest> | undefined> {
-    const record: Record = await this.callZome(
+  async getBookingRequest(bookingRequestHash: ActionHash): Promise<
+    | {
+        bookingRequest: EntryRecord<BookingRequest>;
+        deletes: Array<SignedActionHashed>;
+      }
+    | undefined
+  > {
+    const result = await this.callZome(
       'get_booking_request',
       bookingRequestHash
     );
-    return record ? new EntryRecord(record) : undefined;
+    if (!result) return undefined;
+
+    return {
+      bookingRequest: new EntryRecord(result.booking_request),
+      deletes: result.deletes,
+    };
   }
 
   cancelBookingRequest(
@@ -173,11 +184,13 @@ export class BookieClient extends ZomeClient<BookieSignal> {
 
   /** My Booking Requests */
 
-  async getMyBookingRequests(): Promise<Array<EntryRecord<BookingRequest>>> {
-    const records: Record[] = await this.callZome(
-      'get_my_booking_requests',
-      null
-    );
-    return records.map(r => new EntryRecord(r));
+  async getMyBookingRequests(): Promise<Array<ActionHash>> {
+    return this.callZome('get_my_booking_requests', null);
+  }
+
+  async clearMyBookingRequests(
+    bookingRequestsHashes: Array<ActionHash>
+  ): Promise<void> {
+    return this.callZome('clear_my_booking_requests', bookingRequestsHashes);
   }
 }

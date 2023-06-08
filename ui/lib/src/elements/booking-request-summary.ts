@@ -50,7 +50,9 @@ export class BookingRequestSummary extends LitElement {
         this.bookieStore.bookingRequests.get(this.bookingRequestHash),
         bookingRequest =>
           bookingRequest
-            ? this.bookieStore.resources.get(bookingRequest.entry.resource_hash)
+            ? this.bookieStore.resources.get(
+                bookingRequest.bookingRequest.entry.resource_hash
+              )
             : completed(undefined)
       ),
     () => [this.bookingRequestHash]
@@ -61,39 +63,43 @@ export class BookingRequestSummary extends LitElement {
     resource: EntryRecord<Resource>
   ) {
     return html`
-      <div
-        slot="header"
-        style="display: flex; flex-direction: row; align-items: center"
-      >
-        <span style="white-space: pre-line;  flex: 1"
+      <div class="column">
+        <span
+          style="white-space: pre-line;  flex: 1; margin-bottom: 16px"
+          class="title"
           >${bookingRequest.entry.title}</span
         >
 
-        <span>${msg('Requestor:')}&nbsp;</span>
-        <agent-avatar
-          .agentPubKey=${bookingRequest.action.author}
-        ></agent-avatar>
-      </div>
+        <div class="row" style="align-items: center; margin-bottom: 12px">
+          <span>${msg('Requestor:')}&nbsp;</span>
+          <agent-avatar
+            .agentPubKey=${bookingRequest.action.author}
+          ></agent-avatar>
+        </div>
+        <span style="margin-bottom: 16px"
+          >${msg('Resource')}:&nbsp;${resource.entry.name}</span
+        >
 
-      <div class="row">
-        <span>${msg('From')}&nbsp;</span>
-        <sl-format-date
-          month="long"
-          day="numeric"
-          year="numeric"
-          hour="numeric"
-          minute="numeric"
-          .date=${new Date(bookingRequest.entry.start_time / 1000)}
-        ></sl-format-date>
-        <span>&nbsp;${msg('to')}&nbsp;</span>
-        <sl-format-date
-          month="long"
-          day="numeric"
-          year="numeric"
-          hour="numeric"
-          minute="numeric"
-          .date=${new Date(bookingRequest.entry.end_time / 1000)}
-        ></sl-format-date>
+        <div class="row">
+          <span>${msg('From')}&nbsp;</span>
+          <sl-format-date
+            month="long"
+            day="numeric"
+            year="numeric"
+            hour="numeric"
+            minute="numeric"
+            .date=${new Date(bookingRequest.entry.start_time / 1000)}
+          ></sl-format-date>
+          <span>&nbsp;${msg('to')}&nbsp;</span>
+          <sl-format-date
+            month="long"
+            day="numeric"
+            year="numeric"
+            hour="numeric"
+            minute="numeric"
+            .date=${new Date(bookingRequest.entry.end_time / 1000)}
+          ></sl-format-date>
+        </div>
       </div>
     `;
   }
@@ -113,7 +119,7 @@ export class BookingRequestSummary extends LitElement {
           >`;
 
         return this.renderSummary(
-          this._bookingRequest.value.value[0],
+          this._bookingRequest.value.value[0].bookingRequest,
           this._bookingRequest.value.value[1]!
         );
       case 'error':

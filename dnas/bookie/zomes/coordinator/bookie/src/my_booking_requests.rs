@@ -1,16 +1,28 @@
-use hdk::prelude::*;
 use bookie_integrity::*;
+use hdk::prelude::*;
 #[hdk_extern]
-pub fn get_my_booking_requests(author: AgentPubKey) -> ExternResult<Vec<Record>> {
-    let links = get_links(author, LinkTypes::MyBookingRequests, None)?;
-    let get_input: Vec<GetInput> = links
+pub fn get_my_booking_requests(_: ()) -> ExternResult<Vec<ActionHash>> {
+    let my_pub_key = agent_info()?.agent_latest_pubkey;
+
+    let links = get_links(my_pub_key, LinkTypes::MyBookingRequests, None)?;
+    let hashes: Vec<ActionHash> = links
         .into_iter()
-        .map(|link| GetInput::new(
-            ActionHash::from(link.target).into(),
-            GetOptions::default(),
-        ))
+        .map(|link| ActionHash::from(link.target))
         .collect();
-    let records = HDK.with(|hdk| hdk.borrow().get(get_input))?;
-    let records: Vec<Record> = records.into_iter().filter_map(|r| r).collect();
-    Ok(records)
+    Ok(hashes)
+}
+
+#[hdk_extern]
+pub fn clear_my_booking_requests(booking_requests_hashes: Vec<ActionHash>) -> ExternResult<()> {
+    let my_pub_key = agent_info()?.agent_latest_pubkey;
+
+    let links = get_links(my_pub_key, LinkTypes::MyBookingRequests, None)?;
+
+    for link in links {
+        if booking_requests_hashes.contains(&ActionHash::from(link.target.clone())) {
+            delete_link(link.create_link_hash)?;
+        }
+    }
+
+    Ok(())
 }

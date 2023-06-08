@@ -18,6 +18,7 @@
     "./dist/*": "./dist/*"
   },
   "dependencies": {
+    "@holochain-open-dev/core-types": "^0.6.6",
     "@holochain-open-dev/elements": "^0.5.0",
     "@holochain-open-dev/file-storage": "^0.4.3",
     "@holochain-open-dev/profiles": "^0.14.0",

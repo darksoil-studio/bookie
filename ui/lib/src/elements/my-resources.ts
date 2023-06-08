@@ -37,7 +37,9 @@ export class MyResources extends LitElement {
   _myResources = new StoreSubscriber(
     this,
     () =>
-      this.bookieStore.myResources.get(this.bookieStore.client.client.myPubKey),
+      this.bookieStore.resourcesForAgent.get(
+        this.bookieStore.client.client.myPubKey
+      ),
     () => []
   );
 
@@ -48,7 +50,7 @@ export class MyResources extends LitElement {
           .src=${wrapPathInSvg(mdiInformationOutline)}
           style="color: grey; height: 64px; width: 64px; margin-bottom: 16px"
         ></sl-icon>
-        <span class="placeholder">${msg('No resources found')}</span>
+        <span class="placeholder">${msg('No resources found.')}</span>
       </div>`;
 
     return html`
@@ -59,7 +61,7 @@ export class MyResources extends LitElement {
           hash =>
             html`<resource-summary
               .resourceHash=${hash}
-              style="margin-bottom: 16px; margin-right: 16px"
+              style=" margin-right: 16px"
             ></resource-summary>`
         )}
       </div>
@@ -75,7 +77,9 @@ export class MyResources extends LitElement {
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderList(this._myResources.value.value);
+        return this.renderList(
+          this._myResources.value.value.map(r => r.actionHash)
+        );
       case 'error':
         return html`<display-error
           .headline=${msg('Error fetching the resources')}

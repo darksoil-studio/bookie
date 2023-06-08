@@ -44,8 +44,7 @@ import { mdiArrowLeft } from '@mdi/js';
 
 type View =
   | { view: 'main' }
-  | { view: 'resource_detail'; resourceHash: ActionHash }
-  | { view: 'booking_request_detail'; bookingRequestHash: ActionHash };
+  | { view: 'resource_detail'; resourceHash: ActionHash };
 
 @localized()
 @customElement('holochain-app')
@@ -123,18 +122,7 @@ export class HolochainApp extends LitElement {
       return html`<resource-detail
         .resourceHash=${this._view.resourceHash}
         style="flex: 1"
-        @booking-request-selected=${(e: CustomEvent) => {
-          this._view = {
-            view: 'booking_request_detail',
-            bookingRequestHash: e.detail.bookingRequestHash,
-          };
-        }}
       ></resource-detail>`;
-    if (this._view.view === 'booking_request_detail')
-      return html`<booking-request-detail
-        .bookingRequestHash=${this._view.bookingRequestHash}
-        style="flex: 1"
-      ></booking-request-detail>`;
 
     return html`
       <main-dashboard
@@ -142,12 +130,6 @@ export class HolochainApp extends LitElement {
           this._view = {
             view: 'resource_detail',
             resourceHash: e.detail.resourceHash,
-          };
-        }}
-        @booking-request-selected=${(e: CustomEvent) => {
-          this._view = {
-            view: 'booking_request_detail',
-            bookingRequestHash: e.detail.bookingRequestHash,
           };
         }}
       ></main-dashboard>

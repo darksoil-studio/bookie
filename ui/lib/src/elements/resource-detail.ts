@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state, property, customElement } from 'lit/decorators.js';
-import { EntryHash, Record, ActionHash } from '@holochain/client';
+import { ActionHash } from '@holochain/client';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { StoreSubscriber } from '@holochain-open-dev/stores';
 import {
@@ -11,7 +11,7 @@ import {
 } from '@holochain-open-dev/elements';
 import { consume } from '@lit-labs/context';
 import { localized, msg } from '@lit/localize';
-import { mdiAlertCircleOutline, mdiPencil, mdiDelete } from '@mdi/js';
+import { mdiPencil, mdiDelete } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
@@ -26,7 +26,7 @@ import '@holochain-open-dev/file-storage/dist/elements/show-image.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 
 import './edit-resource.js';
-import './bookings-for-resource.js';
+import './resource-calendar.js';
 import './booking-requests-for-resource.js';
 
 import { BookieStore } from '../bookie-store.js';
@@ -95,7 +95,7 @@ export class ResourceDetail extends LitElement {
 
   renderDetail(entryRecord: EntryRecord<Resource>) {
     return html`
-      <div class="column" style="align-items: center">
+      <div class="column" style="align-items: center; margin-top: 32px">
         <sl-card style="max-width: 600px">
           <show-image
             slot="image"
@@ -109,19 +109,24 @@ export class ResourceDetail extends LitElement {
               >${entryRecord.entry.name}</span
             >
 
-            <sl-icon-button
-              style="margin-left: 8px"
-              .src=${wrapPathInSvg(mdiPencil)}
-              @click=${() => {
-                this._editing = true;
-              }}
-            ></sl-icon-button>
-            <sl-icon-button
-              style="margin-left: 8px"
-              .src=${wrapPathInSvg(mdiDelete)}
-              @click=${() => this.deleteResource()}
-              .loading=${this.deleting}
-            ></sl-icon-button>
+            ${entryRecord.action.author.toString() ===
+            this.bookieStore.client.client.myPubKey.toString()
+              ? html`
+                  <sl-icon-button
+                    style="margin-left: 8px"
+                    .src=${wrapPathInSvg(mdiPencil)}
+                    @click=${() => {
+                      this._editing = true;
+                    }}
+                  ></sl-icon-button>
+                  <sl-icon-button
+                    style="margin-left: 8px"
+                    .src=${wrapPathInSvg(mdiDelete)}
+                    @click=${() => this.deleteResource()}
+                    .loading=${this.deleting}
+                  ></sl-icon-button>
+                `
+              : html``}
           </div>
 
           <div style="display: flex; flex-direction: column">
@@ -145,10 +150,7 @@ export class ResourceDetail extends LitElement {
     return html` <div class="column" style="flex: 1">
       <span class="title" style=" margin: 16px"> ${resource.entry.name}</span>
       <sl-tab-group style="display: flex; flex: 1">
-        <sl-tab slot="nav" panel="calendar">${msg('Calendar')}</sl-tab>
-        <sl-tab slot="nav" panel="booking_requests"
-          >${msg('Booking Requests')}</sl-tab
-        >
+        <sl-tab slot="nav" panel="calendar">${msg('Bookings')}</sl-tab>
         <sl-tab slot="nav" panel="details">${msg('Resource Details')}</sl-tab>
 
         <sl-tab-panel name="calendar">
@@ -156,24 +158,10 @@ export class ResourceDetail extends LitElement {
             <div class="flex-scrollable-container">
               <div class="flex-scrollable-y">
                 <div class="column">
-                  <bookings-for-resource
+                  <resource-calendar
                     style="margin: 16px"
                     .resourceHash=${this.resourceHash}
-                  ></bookings-for-resource>
-                </div>
-              </div>
-            </div>
-          </div>
-        </sl-tab-panel>
-        <sl-tab-panel name="booking_requests">
-          <div class="flex-scrollable-parent">
-            <div class="flex-scrollable-container">
-              <div class="flex-scrollable-y">
-                <div class="column" style="align-items: center">
-                  <booking-requests-for-resource
-                    style="width: 700px"
-                    .resourceHash=${this.resourceHash}
-                  ></booking-requests-for-resource>
+                  ></resource-calendar>
                 </div>
               </div>
             </div>
@@ -258,6 +246,9 @@ export class ResourceDetail extends LitElement {
       .flex-scrollable-parent {
         width: 100%;
         height: 100%;
+      }
+      sl-tab-panel::part(base) {
+        padding: 0 !important;
       }
     `,
   ];

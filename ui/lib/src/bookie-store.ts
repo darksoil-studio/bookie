@@ -4,7 +4,16 @@ import { BookingRequest } from './types';
 
 import { Resource } from './types';
 
-import { lazyLoadAndPoll, AsyncReadable } from '@holochain-open-dev/stores';
+import {
+  lazyLoadAndPoll,
+  AsyncReadable,
+  pipe,
+  completed,
+  asyncDeriveAndJoin,
+  asyncDeriveStore,
+  asyncDerived,
+  sliceAndJoin,
+} from '@holochain-open-dev/stores';
 import { EntryRecord, LazyHoloHashMap } from '@holochain-open-dev/utils';
 import {
   NewEntryAction,
@@ -15,6 +24,21 @@ import {
 } from '@holochain/client';
 
 import { BookieClient } from './bookie-client.js';
+
+export type RequestStatus =
+  | {
+      status: 'pending';
+    }
+  | {
+      status: 'rejected';
+    }
+  | {
+      status: 'cancelled';
+    }
+  | {
+      status: 'accepted';
+      bookingHash: ActionHash;
+    };
 
 export class BookieStore {
   constructor(public client: BookieClient) {}
@@ -27,20 +51,75 @@ export class BookieStore {
 
   /** Booking Request */
 
-  bookingRequests = new LazyHoloHashMap((bookingRequestHash: ActionHash) =>
-    lazyLoadAndPoll(
-      async () => this.client.getBookingRequest(bookingRequestHash),
-      4000
+  bookingRequests: LazyHoloHashMap<
+    ActionHash,
+    AsyncReadable<
+      | { bookingRequest: EntryRecord<BookingRequest>; status: RequestStatus }
+      | undefined
+    >
+  > = new LazyHoloHashMap((bookingRequestHash: ActionHash) =>
+    pipe(
+      lazyLoadAndPoll(
+        async () => this.client.getBookingRequest(bookingRequestHash),
+        4000
+      ),
+      requestAndDeletes => {
+        console.log(requestAndDeletes);
+        if (!requestAndDeletes) return completed(undefined);
+
+        const bookingRequest = requestAndDeletes.bookingRequest;
+        if (requestAndDeletes.deletes.length > 0) {
+          if (
+            requestAndDeletes.deletes[0].hashed.content.author.toString() ===
+            this.client.client.myPubKey.toString()
+          ) {
+            return completed({
+              status: {
+                status: 'cancelled',
+              } as RequestStatus,
+              bookingRequest,
+            });
+          } else {
+            return completed({
+              status: {
+                status: 'rejected',
+              } as RequestStatus,
+              bookingRequest,
+            });
+          }
+        } else {
+          return asyncDerived(
+            this.bookingsForBookingRequest.get(bookingRequestHash),
+            bookings => {
+              console.log('hey');
+              if (bookings.length > 0) {
+                return {
+                  status: {
+                    status: 'accepted',
+                    bookingHash: bookings[0],
+                  } as RequestStatus,
+                  bookingRequest,
+                };
+              } else {
+                return {
+                  status: {
+                    status: 'pending',
+                  } as RequestStatus,
+                  bookingRequest,
+                };
+              }
+            }
+          );
+        }
+      }
     )
   );
 
   bookingRequestsForResource = new LazyHoloHashMap((resourceHash: ActionHash) =>
-    lazyLoadAndPoll(async () => {
-      const records = await this.client.getBookingRequestsForResource(
-        resourceHash
-      );
-      return records.map(r => r.actionHash);
-    }, 4000)
+    lazyLoadAndPoll(
+      async () => this.client.getBookingRequestsForResource(resourceHash),
+      4000
+    )
   );
 
   /** Booking */
@@ -75,17 +154,14 @@ export class BookieStore {
 
   /** My Resources */
 
-  myResources = new LazyHoloHashMap((author: AgentPubKey) =>
-    lazyLoadAndPoll(async () => {
-      const records = await this.client.getMyResources(author);
-      return records.map(r => r.actionHash);
-    }, 4000)
+  resourcesForAgent = new LazyHoloHashMap((author: AgentPubKey) =>
+    lazyLoadAndPoll(async () => this.client.getMyResources(author), 4000)
   );
 
   /** My Booking Requests */
 
-  myBookingRequests = lazyLoadAndPoll(async () => {
-    const records = await this.client.getMyBookingRequests();
-    return records.map(r => r.actionHash);
-  }, 4000);
+  myBookingRequests = pipe(
+    lazyLoadAndPoll(async () => this.client.getMyBookingRequests(), 4000),
+    hashes => sliceAndJoin(this.bookingRequests, hashes)
+  );
 }

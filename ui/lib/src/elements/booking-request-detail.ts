@@ -19,6 +19,7 @@ import { mdiAlertCircleOutline, mdiPencil, mdiDelete } from '@mdi/js';
 
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import '@shoelace-style/shoelace/dist/components/card/card.js';
+import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 import '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -27,9 +28,10 @@ import SlAlert from '@shoelace-style/shoelace/dist/components/alert/alert.js';
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import './edit-booking-request.js';
 
-import { BookieStore } from '../bookie-store.js';
+import { BookieStore, RequestStatus } from '../bookie-store.js';
 import { bookieStoreContext } from '../context.js';
 import { BookingRequest, Resource } from '../types.js';
+import SlDialog from '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
 
 /**
  * @element booking-request-detail
@@ -56,10 +58,15 @@ export class BookingRequestDetail extends LitElement {
     () =>
       asyncDeriveAndJoin(
         this.bookieStore.bookingRequests.get(this.bookingRequestHash),
-        bookingRequest =>
-          bookingRequest
-            ? this.bookieStore.resources.get(bookingRequest.entry.resource_hash)
-            : completed(undefined)
+        bookingRequest => {
+          console.log(bookingRequest?.bookingRequest);
+          console.log(bookingRequest?.bookingRequest.entry.resource_hash);
+          return bookingRequest
+            ? this.bookieStore.resources.get(
+                bookingRequest.bookingRequest.entry.resource_hash
+              )
+            : completed(undefined);
+        }
       ),
     () => [this.bookingRequestHash]
   );
@@ -88,7 +95,7 @@ export class BookingRequestDetail extends LitElement {
   @state()
   rejecting = false;
 
-  async cancelledBookingRequest() {
+  async cancelBookingRequest() {
     if (this.cancelling) return;
     this.cancelling = true;
     try {
@@ -105,6 +112,7 @@ export class BookingRequestDetail extends LitElement {
           },
         })
       );
+      (this.shadowRoot?.querySelector('sl-dialog') as SlDialog).hide();
     } catch (e: any) {
       console.error(e);
       notifyError(msg('Error cancelling the booking request'));
@@ -129,6 +137,7 @@ export class BookingRequestDetail extends LitElement {
           },
         })
       );
+      (this.shadowRoot?.querySelector('sl-dialog') as SlDialog).hide();
     } catch (e: any) {
       console.error(e);
       notifyError(msg('Error rejecting the booking request'));
@@ -157,6 +166,7 @@ export class BookingRequestDetail extends LitElement {
           },
         })
       );
+      (this.shadowRoot?.querySelector('sl-dialog') as SlDialog).hide();
     } catch (e: any) {
       console.error(e);
       notifyError(msg('Error acceptin the booking request'));
@@ -166,59 +176,54 @@ export class BookingRequestDetail extends LitElement {
 
   renderDetail(
     bookingRequest: EntryRecord<BookingRequest>,
+    status: RequestStatus,
     resource: EntryRecord<Resource>
   ) {
     return html`
-      <sl-card>
-        <div slot="header" style="display: flex; flex-direction: row">
-          <span style="font-size: 18px; flex: 1;"
-            >${msg('Booking Request')}</span
-          >
+      ${false &&
+      bookingRequest.action.author.toString() ===
+        this.bookieStore.client.client.myPubKey.toString()
+        ? html`
+            <sl-icon-button
+              style="margin-left: 8px"
+              .src=${wrapPathInSvg(mdiPencil)}
+              @click=${() => {
+                this._editing = true;
+              }}
+            ></sl-icon-button>
+            <sl-icon-button
+              style="margin-left: 8px"
+              .src=${wrapPathInSvg(mdiDelete)}
+              .loading=${this.cancelling}
+              @click=${() => this.cancelBookingRequest()}
+            ></sl-icon-button>
+          `
+        : html``}
 
-          ${bookingRequest.action.author.toString() ===
-          this.bookieStore.client.client.myPubKey.toString()
-            ? html`
-                <sl-icon-button
-                  style="margin-left: 8px"
-                  .src=${wrapPathInSvg(mdiPencil)}
-                  @click=${() => {
-                    this._editing = true;
-                  }}
-                ></sl-icon-button>
-                <sl-icon-button
-                  style="margin-left: 8px"
-                  .src=${wrapPathInSvg(mdiDelete)}
-                  .loading=${this.cancelling}
-                  @click=${() => this.cancelledBookingRequest()}
-                ></sl-icon-button>
-              `
-            : html``}
+      <div style="display: flex; flex-direction: column">
+        <div style="display: flex; flex-direction: column; margin-bottom: 16px">
+          <span style="margin-bottom: 8px"
+            ><strong>${msg('Title')}:</strong></span
+          >
+          <span style="white-space: pre-line"
+            >${bookingRequest.entry.title}</span
+          >
         </div>
 
-        <div style="display: flex; flex-direction: column">
-          <div
-            style="display: flex; flex-direction: column; margin-bottom: 16px"
+        <div style="display: flex; flex-direction: column; margin-bottom: 16px">
+          <span style="margin-bottom: 8px"
+            ><strong>${msg('Comment')}:</strong></span
           >
-            <span style="margin-bottom: 8px"
-              ><strong>${msg('Title')}:</strong></span
-            >
-            <span style="white-space: pre-line"
-              >${bookingRequest.entry.title}</span
-            >
-          </div>
-
-          <div
-            style="display: flex; flex-direction: column; margin-bottom: 16px"
+          <span style="white-space: pre-line"
+            >${bookingRequest.entry.comment}</span
           >
-            <span style="margin-bottom: 8px"
-              ><strong>${msg('Comment')}:</strong></span
-            >
-            <span style="white-space: pre-line"
-              >${bookingRequest.entry.comment}</span
-            >
-          </div>
         </div>
+      </div>
 
+      <div style="display: flex; flex-direction: column; margin-bottom: 16px">
+        <span style="margin-bottom: 8px"
+          ><strong>${msg('Time Slot')}:</strong></span
+        >
         <div class="row">
           <span>${msg('From')}&nbsp;</span>
           <sl-format-date
@@ -239,37 +244,57 @@ export class BookingRequestDetail extends LitElement {
             .date=${new Date(bookingRequest.entry.end_time / 1000)}
           ></sl-format-date>
         </div>
+      </div>
 
-        <div slot="footer" class="row">
-          <span style="flex: 1"></span>
-          <sl-button
-            variant="danger"
-            style="margin-right: 16px"
-            .loading=${this.rejecting}
-            @click=${() => this.rejectBookingRequest()}
-            >${msg('Reject Booking Request')}</sl-button
-          >
-          <sl-button
-            variant="success"
-            .loading=${this.creatingBooking}
-            @click=${() => this.createBooking(bookingRequest)}
-            >${msg('Accept Booking Request')}</sl-button
-          >
-        </div>
-      </sl-card>
+      <div slot="footer" class="row">
+        <span style="flex: 1"></span>
+        ${bookingRequest.action.author.toString() ===
+          this.bookieStore.client.client.myPubKey.toString() &&
+        status.status === 'pending'
+          ? html`
+              <sl-button
+                variant="warning"
+                .loading=${this.cancelling}
+                @click=${() => this.cancelBookingRequest()}
+                >${msg('Cancel')}</sl-button
+              >
+            `
+          : html``}
+        ${resource.action.author.toString() ===
+          this.bookieStore.client.client.myPubKey.toString() &&
+        status.status === 'pending'
+          ? html`
+              <sl-button
+                variant="danger"
+                style="margin-left: 16px"
+                .loading=${this.rejecting}
+                @click=${() => this.rejectBookingRequest()}
+                >${msg('Reject')}</sl-button
+              >
+              <sl-button
+                variant="success"
+                style="margin-left: 16px"
+                .loading=${this.creatingBooking}
+                @click=${() => this.createBooking(bookingRequest)}
+                >${msg('Accept')}</sl-button
+              >
+            `
+          : html``}
+      </div>
     `;
   }
 
-  render() {
+  renderContent() {
+    console.log(this._bookingRequest.value);
     switch (this._bookingRequest.value.status) {
       case 'pending':
-        return html`<sl-card>
+        return html`
           <div
             style="display: flex; flex: 1; align-items: center; justify-content: center"
           >
             <sl-spinner style="font-size: 2rem;"></sl-spinner>
           </div>
-        </sl-card>`;
+        `;
       case 'complete':
         const bookingRequest = this._bookingRequest.value.value;
 
@@ -291,15 +316,33 @@ export class BookingRequestDetail extends LitElement {
           ></edit-booking-request>`;
         }
 
-        return this.renderDetail(bookingRequest[0], bookingRequest[1]!);
+        return this.renderDetail(
+          bookingRequest[0].bookingRequest,
+          bookingRequest[0].status,
+          bookingRequest[1]!
+        );
       case 'error':
-        return html`<sl-card>
+        return html`
           <display-error
             .headline=${msg('Error fetching the booking request')}
             .error=${this._bookingRequest.value.error.data.data}
           ></display-error>
-        </sl-card>`;
+        `;
     }
+  }
+  render() {
+    return html`
+      <sl-dialog
+        .label=${msg('Booking Request')}
+        open
+        @sl-request-close=${(e: Event) => {
+          if (this.cancelling || this.rejecting || this.creatingBooking) {
+            e.preventDefault();
+          }
+        }}
+        >${this.renderContent()}
+      </sl-dialog>
+    `;
   }
 
   static styles = [sharedStyles];

@@ -79,7 +79,9 @@ export class BookingRequestsForResource extends LitElement {
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderList(this._bookingRequests.value.value);
+        return this.renderList(
+          this._bookingRequests.value.value.map(r => r.actionHash)
+        );
       case 'error':
         return html`<display-error
           .headline=${msg('Error fetching the booking requests')}
