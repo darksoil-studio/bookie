@@ -96,52 +96,58 @@ export class ResourceDetail extends LitElement {
   renderDetail(entryRecord: EntryRecord<Resource>) {
     return html`
       <div class="column" style="align-items: center; margin-top: 32px">
-        <sl-card style="max-width: 600px">
-          <show-image
-            slot="image"
-            .imageHash=${entryRecord.entry.image_hash}
-          ></show-image>
-          <div
-            slot="header"
-            style="display: flex; flex-direction: row; align-items: center"
-          >
-            <span style="font-size: 18px; flex: 1;"
-              >${entryRecord.entry.name}</span
-            >
-
-            ${entryRecord.action.author.toString() ===
-            this.bookieStore.client.client.myPubKey.toString()
-              ? html`
-                  <sl-icon-button
-                    style="margin-left: 8px"
-                    .src=${wrapPathInSvg(mdiPencil)}
-                    @click=${() => {
-                      this._editing = true;
-                    }}
-                  ></sl-icon-button>
-                  <sl-icon-button
-                    style="margin-left: 8px"
-                    .src=${wrapPathInSvg(mdiDelete)}
-                    @click=${() => this.deleteResource()}
-                    .loading=${this.deleting}
-                  ></sl-icon-button>
-                `
-              : html``}
-          </div>
-
-          <div style="display: flex; flex-direction: column">
+        <div class="row">
+          <sl-card style="max-width: 600px; margin-right: 16px">
+            <show-image
+              slot="image"
+              .imageHash=${entryRecord.entry.image_hash}
+            ></show-image>
             <div
-              style="display: flex; flex-direction: column; margin-bottom: 16px"
+              slot="header"
+              style="display: flex; flex-direction: row; align-items: center"
             >
-              <span style="margin-bottom: 8px"
-                ><strong>${msg('Description')}:</strong></span
+              <span style="font-size: 18px; flex: 1;"
+                >${entryRecord.entry.name}</span
               >
-              <span style="white-space: pre-line"
-                >${entryRecord.entry.description}</span
-              >
+
+              ${entryRecord.action.author.toString() ===
+              this.bookieStore.client.client.myPubKey.toString()
+                ? html`
+                    <sl-icon-button
+                      style="margin-left: 8px"
+                      .src=${wrapPathInSvg(mdiPencil)}
+                      @click=${() => {
+                        this._editing = true;
+                      }}
+                    ></sl-icon-button>
+                    <sl-icon-button
+                      style="margin-left: 8px"
+                      .src=${wrapPathInSvg(mdiDelete)}
+                      @click=${() => this.deleteResource()}
+                      .loading=${this.deleting}
+                    ></sl-icon-button>
+                  `
+                : html``}
             </div>
-          </div>
-        </sl-card>
+
+            <div style="display: flex; flex-direction: column">
+              <div
+                style="display: flex; flex-direction: column; margin-bottom: 16px"
+              >
+                <span style="margin-bottom: 8px"
+                  ><strong>${msg('Description')}:</strong></span
+                >
+                <span style="white-space: pre-line"
+                  >${entryRecord.entry.description}</span
+                >
+              </div>
+            </div>
+          </sl-card>
+        </div>
+
+        <div class="column">
+          <slot name="attachments"></slot>
+        </div>
       </div>
     `;
   }
