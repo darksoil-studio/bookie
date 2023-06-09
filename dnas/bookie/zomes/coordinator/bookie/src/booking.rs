@@ -1,7 +1,9 @@
+use crate::{
+    booker_to_bookings::add_booking_for_booker,
+    booking_request::remove_booking_request_for_resource,
+};
 use bookie_integrity::*;
 use hdk::prelude::*;
-
-use crate::booking_request::remove_booking_request_for_resource;
 #[hdk_extern]
 pub fn create_booking(booking: Booking) -> ExternResult<Record> {
     let booking_hash = create_entry(&EntryTypes::Booking(booking.clone()))?;
@@ -12,15 +14,20 @@ pub fn create_booking(booking: Booking) -> ExternResult<Record> {
             LinkTypes::BookingRequestToBookings,
             (),
         )?;
-
-        remove_booking_request_for_resource(booking_request_hash)?;
+        remove_booking_request_for_resource(booking_request_hash.clone())?;
     }
+
+    for booker in booking.bookers {
+        add_booking_for_booker(booker.clone(), booking_hash.clone())?;
+    }
+
     create_link(
         booking.resource_hash.clone(),
         booking_hash.clone(),
         LinkTypes::ResourceToBookings,
         (),
     )?;
+
     let record = get(booking_hash.clone(), GetOptions::default())?.ok_or(wasm_error!(
         WasmErrorInner::Guest(String::from("Could not find the newly created Booking"))
     ))?;

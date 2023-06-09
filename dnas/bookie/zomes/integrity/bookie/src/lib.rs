@@ -1,3 +1,5 @@
+pub mod booker_to_bookings;
+pub use booker_to_bookings::*;
 pub mod booking;
 pub use booking::*;
 pub mod booking_request;
@@ -24,6 +26,7 @@ pub enum LinkTypes {
     AllResources,
     MyResources,
     MyBookingRequests,
+    BookerToBookings,
 }
 #[hdk_extern]
 pub fn genesis_self_check(
@@ -230,6 +233,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         tag,
                     )
                 }
+                LinkTypes::BookerToBookings => {
+                    validate_create_link_booker_to_bookings(
+                        action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
             }
         }
         FlatOp::RegisterDeleteLink {
@@ -297,6 +308,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                 }
                 LinkTypes::MyBookingRequests => {
                     validate_delete_link_my_booking_requests(
+                        action,
+                        original_action,
+                        base_address,
+                        target_address,
+                        tag,
+                    )
+                }
+                LinkTypes::BookerToBookings => {
+                    validate_delete_link_booker_to_bookings(
                         action,
                         original_action,
                         base_address,
@@ -585,6 +605,14 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                                 tag,
                             )
                         }
+                        LinkTypes::BookerToBookings => {
+                            validate_create_link_booker_to_bookings(
+                                action,
+                                base_address,
+                                target_address,
+                                tag,
+                            )
+                        }
                     }
                 }
                 OpRecord::DeleteLink { original_action_hash, base_address, action } => {
@@ -666,6 +694,15 @@ pub fn validate(op: Op) -> ExternResult<ValidateCallbackResult> {
                         }
                         LinkTypes::MyBookingRequests => {
                             validate_delete_link_my_booking_requests(
+                                action,
+                                create_link.clone(),
+                                base_address,
+                                create_link.target_address,
+                                create_link.tag,
+                            )
+                        }
+                        LinkTypes::BookerToBookings => {
+                            validate_delete_link_booker_to_bookings(
                                 action,
                                 create_link.clone(),
                                 base_address,

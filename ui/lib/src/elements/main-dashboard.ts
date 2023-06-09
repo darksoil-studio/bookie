@@ -10,15 +10,25 @@ import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 
 import './all-resources.js';
 import './create-resource.js';
+import './bookings-for-booker.js';
 import './pending-booking-requests.js';
 import './my-resources.js';
 import './my-resources-calendar.js';
 import './my-booking-requests.js';
 import { CreateResource } from './create-resource.js';
+import { BookieStore } from '../bookie-store.js';
+import { bookieStoreContext } from '../context.js';
+import { consume } from '@lit-labs/context';
 
 @localized()
 @customElement('main-dashboard')
 export class MainDashboard extends LitElement {
+  /**
+   * @internal
+   */
+  @consume({ context: bookieStoreContext, subscribe: true })
+  bookieStore!: BookieStore;
+
   render() {
     return html`
       <create-resource></create-resource>
@@ -30,6 +40,7 @@ export class MainDashboard extends LitElement {
         <sl-tab slot="nav" panel="my_booking_requests"
           >${msg('My Booking Requests')}</sl-tab
         >
+        <sl-tab slot="nav" panel="my_bookings">${msg('My Bookings')}</sl-tab>
         <sl-tab slot="nav" disabled>${msg('Manage Resources')}</sl-tab>
         <sl-tab slot="nav" panel="my_resources">${msg('My Resources')}</sl-tab>
         <sl-tab slot="nav" panel="pending_booking_requests"
@@ -51,6 +62,21 @@ export class MainDashboard extends LitElement {
                   <my-booking-requests
                     style="width: 600px; margin-top: 16px"
                   ></my-booking-requests>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sl-tab-panel>
+
+        <sl-tab-panel name="my_bookings">
+          <div class="flex-scrollable-parent">
+            <div class="flex-scrollable-container">
+              <div class="flex-scrollable-y">
+                <div class="column" style="align-items: center">
+                  <bookings-for-booker
+                    .booker=${this.bookieStore.client.client.myPubKey}
+                    style="width: 600px; margin-top: 16px"
+                  ></bookings-for-booker>
                 </div>
               </div>
             </div>

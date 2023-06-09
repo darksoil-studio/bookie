@@ -77,6 +77,7 @@ export class CreateBooking extends LitElement {
 
     const booking: Booking = {
       title: fields.title,
+      bookers: [],
       start_time: new Date(fields.start_time).valueOf() * 1000,
       end_time: new Date(fields.end_time).valueOf() * 1000,
       booking_request_hash: this.bookingRequestHash,

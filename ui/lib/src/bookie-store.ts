@@ -64,7 +64,6 @@ export class BookieStore {
         4000
       ),
       requestAndDeletes => {
-        console.log(requestAndDeletes);
         if (!requestAndDeletes) return completed(undefined);
 
         const bookingRequest = requestAndDeletes.bookingRequest;
@@ -172,4 +171,12 @@ export class BookieStore {
       myResources.map(r => r.actionHash)
     )
   );
+
+  /** Bookings for Booker */
+
+  bookingsForBooker = new LazyHoloHashMap((booker: AgentPubKey) =>
+    lazyLoadAndPoll(async () => this.client.getBookingsForBooker(booker), 4000)
+  );
+
+  myBookings = this.bookingsForBooker.get(this.client.client.myPubKey);
 }

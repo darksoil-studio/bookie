@@ -1,3 +1,5 @@
+pub mod booker_to_bookings;
+
 pub mod my_booking_requests;
 pub mod my_resources;
 pub mod all_resources;

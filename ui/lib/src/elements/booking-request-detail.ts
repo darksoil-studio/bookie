@@ -152,6 +152,7 @@ export class BookingRequestDetail extends LitElement {
         start_time: bookingRequest.entry.start_time,
         title: bookingRequest.entry.title,
         resource_hash: bookingRequest.entry.resource_hash,
+        bookers: [bookingRequest.action.author],
       });
 
       this.dispatchEvent(
@@ -282,7 +283,6 @@ export class BookingRequestDetail extends LitElement {
   }
 
   renderContent() {
-    console.log(this._bookingRequest.value);
     switch (this._bookingRequest.value.status) {
       case 'pending':
         return html`

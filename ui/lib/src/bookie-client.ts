@@ -193,4 +193,16 @@ export class BookieClient extends ZomeClient<BookieSignal> {
   ): Promise<void> {
     return this.callZome('clear_my_booking_requests', bookingRequestsHashes);
   }
+
+  /** Bookings for Booker */
+
+  async getBookingsForBooker(
+    booker: AgentPubKey
+  ): Promise<Array<EntryRecord<Booking>>> {
+    const records: Record[] = await this.callZome(
+      'get_bookings_for_booker',
+      booker
+    );
+    return records.map(r => new EntryRecord(r));
+  }
 }
