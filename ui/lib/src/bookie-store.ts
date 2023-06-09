@@ -91,7 +91,6 @@ export class BookieStore {
           return asyncDerived(
             this.bookingsForBookingRequest.get(bookingRequestHash),
             bookings => {
-              console.log('hey');
               if (bookings.length > 0) {
                 return {
                   status: {
@@ -158,10 +157,19 @@ export class BookieStore {
     lazyLoadAndPoll(async () => this.client.getMyResources(author), 4000)
   );
 
+  myResources = this.resourcesForAgent.get(this.client.client.myPubKey);
+
   /** My Booking Requests */
 
   myBookingRequests = pipe(
     lazyLoadAndPoll(async () => this.client.getMyBookingRequests(), 4000),
     hashes => sliceAndJoin(this.bookingRequests, hashes)
+  );
+
+  pendingBookingRequests = pipe(this.myResources, myResources =>
+    sliceAndJoin(
+      this.bookingRequestsForResource,
+      myResources.map(r => r.actionHash)
+    )
   );
 }

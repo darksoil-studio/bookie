@@ -10,6 +10,7 @@ import '@shoelace-style/shoelace/dist/components/tab-panel/tab-panel.js';
 
 import './all-resources.js';
 import './create-resource.js';
+import './pending-booking-requests.js';
 import './my-resources.js';
 import './my-resources-calendar.js';
 import './my-booking-requests.js';
@@ -31,19 +32,33 @@ export class MainDashboard extends LitElement {
         >
         <sl-tab slot="nav" disabled>${msg('Manage Resources')}</sl-tab>
         <sl-tab slot="nav" panel="my_resources">${msg('My Resources')}</sl-tab>
+        <sl-tab slot="nav" panel="pending_booking_requests"
+          >${msg('Pending Booking Requests')}</sl-tab
+        >
         <sl-tab slot="nav" panel="my_resources_calendar"
           >${msg('My Resources Calendar')}</sl-tab
-        >
-        <sl-tab slot="nav" panel="my_resources"
-          >${msg('Pending Booking Requests')}</sl-tab
         >
 
         <sl-tab-panel name="all_resources"
           ><all-resources class="tab-content"></all-resources>
         </sl-tab-panel>
+
+        <sl-tab-panel name="my_booking_requests">
+          <div class="flex-scrollable-parent">
+            <div class="flex-scrollable-container">
+              <div class="flex-scrollable-y">
+                <div class="column" style="align-items: center">
+                  <my-booking-requests
+                    style="width: 600px; margin-top: 16px"
+                  ></my-booking-requests>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sl-tab-panel>
+
         <sl-tab-panel name="my_resources"
           ><my-resources></my-resources>
-
           <sl-button
             @click=${() =>
               (
@@ -56,6 +71,21 @@ export class MainDashboard extends LitElement {
             >${msg('Create Resource')}</sl-button
           >
         </sl-tab-panel>
+
+        <sl-tab-panel name="pending_booking_requests">
+          <div class="flex-scrollable-parent">
+            <div class="flex-scrollable-container">
+              <div class="flex-scrollable-y">
+                <div class="column" style="align-items: center">
+                  <pending-booking-requests
+                    style="width: 600px; margin-top: 16px"
+                  ></pending-booking-requests>
+                </div>
+              </div>
+            </div>
+          </div>
+        </sl-tab-panel>
+
         <sl-tab-panel name="my_resources_calendar">
           <div class="flex-scrollable-parent">
             <div class="flex-scrollable-container">
@@ -69,12 +99,6 @@ export class MainDashboard extends LitElement {
             </div>
           </div>
         </sl-tab-panel>
-        <sl-tab-panel name="my_booking_requests">
-          <div class="column" style="align-items: center">
-            <my-booking-requests
-              style="width: 600px; margin-top: 16px"
-            ></my-booking-requests></div
-        ></sl-tab-panel>
       </sl-tab-group>
     `;
   }

@@ -58,15 +58,12 @@ export class BookingRequestDetail extends LitElement {
     () =>
       asyncDeriveAndJoin(
         this.bookieStore.bookingRequests.get(this.bookingRequestHash),
-        bookingRequest => {
-          console.log(bookingRequest?.bookingRequest);
-          console.log(bookingRequest?.bookingRequest.entry.resource_hash);
-          return bookingRequest
+        bookingRequest =>
+          bookingRequest
             ? this.bookieStore.resources.get(
                 bookingRequest.bookingRequest.entry.resource_hash
               )
-            : completed(undefined);
-        }
+            : completed(undefined)
       ),
     () => [this.bookingRequestHash]
   );

@@ -22,13 +22,15 @@ import './booking-request-summary.js';
 import './booking-request-detail.js';
 import { BookieStore } from '../bookie-store.js';
 import { bookieStoreContext } from '../context.js';
+import { BookingRequest } from '../types.js';
+import { EntryRecord } from '@holochain-open-dev/utils';
 
 /**
  * @element my-booking-requests
  */
 @localized()
-@customElement('my-booking-requests')
-export class MyBookingRequests extends LitElement {
+@customElement('pending-booking-requests')
+export class PendingBookingRequests extends LitElement {
   /**
    * @internal
    */
@@ -38,46 +40,18 @@ export class MyBookingRequests extends LitElement {
   /**
    * @internal
    */
-  _myBookingRequests = new StoreSubscriber(
+  pendingBookingRequests = new StoreSubscriber(
     this,
-    () => this.bookieStore.myBookingRequests,
+    () => this.bookieStore.pendingBookingRequests,
     () => []
   );
 
   @state()
   selectedBookingRequest: ActionHash | undefined;
 
-  @state()
-  clearing = false;
-
-  async clearMyBookingRequests(bookingRequestsHashes: Array<ActionHash>) {
-    if (this.clearing) return;
-    this.clearing = true;
-
-    try {
-      await this.bookieStore.client.clearMyBookingRequests(
-        bookingRequestsHashes
-      );
-
-      this.dispatchEvent(
-        new CustomEvent('booking-requests-cleared', {
-          bubbles: true,
-          composed: true,
-          detail: {
-            bookingRequestsHashes,
-          },
-        })
-      );
-    } catch (e: any) {
-      console.error(e);
-      notifyError(msg('Error clearing the booking requests'));
-    }
-    this.clearing = false;
-  }
-
   renderList(hashes: Array<ActionHash>) {
     if (hashes.length === 0)
-      return html` <div class="column center-content" style="margin: 16px">
+      return html` <div class="column center-content" style="flex: 1">
         <sl-icon
           .src=${wrapPathInSvg(mdiInformationOutline)}
           style="color: grey; height: 64px; width: 64px; margin-bottom: 16px"
@@ -121,7 +95,7 @@ export class MyBookingRequests extends LitElement {
   }
 
   render() {
-    switch (this._myBookingRequests.value.status) {
+    switch (this.pendingBookingRequests.value.status) {
       case 'pending':
         return html`<div
           style="display: flex; flex: 1; align-items: center; justify-content: center"
@@ -129,35 +103,17 @@ export class MyBookingRequests extends LitElement {
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
       case 'complete':
-        const myBookingRequests = this._myBookingRequests.value.value;
+        const bookingRequests = this.pendingBookingRequests.value.value;
 
-        const pending = Array.from(myBookingRequests.values())
-          .filter(br => br.status.status === 'pending')
-          .map(br => br.bookingRequest.actionHash);
-        const rejected = Array.from(myBookingRequests.values())
-          .filter(br => br.status.status === 'rejected')
-          .map(br => br.bookingRequest.actionHash);
+        const flattened = ([] as EntryRecord<BookingRequest>[]).concat(
+          ...Array.from(bookingRequests.values())
+        );
 
-        return html` <div class="column" style="flex: 1">
-          <span class="title">${msg('Pending')}</span>
-          <sl-divider></sl-divider>
-          ${this.renderList(pending)}
-
-          <div class="row" style="align-items: center; margin-top: 16px">
-            <span class="title" style="flex: 1">${msg('Rejected')}</span>
-            <sl-button
-              @click=${() => this.clearMyBookingRequests(rejected)}
-              .loading=${this.clearing}
-              >${msg('Clear')}</sl-button
-            >
-          </div>
-          <sl-divider></sl-divider>
-          ${this.renderList(rejected)}
-        </div>`;
+        return this.renderList(flattened.map(r => r.actionHash));
       case 'error':
         return html`<display-error
           .headline=${msg('Error fetching the booking requests')}
-          .error=${this._myBookingRequests.value.error.data.data}
+          .error=${this.pendingBookingRequests.value.error.data.data}
         ></display-error>`;
     }
   }
