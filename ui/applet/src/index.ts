@@ -2,6 +2,7 @@ import '@darksoil/bookie/dist/elements/booking-detail.js';
 import '@darksoil/bookie/dist/elements/booking-request-detail.js';
 import '@darksoil/bookie/dist/elements/resource-detail.js';
 import '@darksoil/bookie/dist/elements/all-resources.js';
+import '@darksoil/bookie/dist/elements/all-resources-calendar.js';
 import '@darksoil/bookie/dist/elements/bookie-context.js';
 
 import { BookieStore, BookieClient, RequestStatus } from '@darksoil/bookie';
@@ -34,6 +35,7 @@ import {
   mdiCalendarCheck,
   mdiCalendarQuestion,
   mdiCalendarRemove,
+  mdiCalendarWeekend,
   mdiTableClock,
   mdiTimetable,
 } from '@mdi/js';
@@ -133,6 +135,34 @@ async function appletViews(
                     );
                   }}
                 ></all-resources>
+              `
+            ),
+            element
+          );
+        },
+      },
+      todays_bookings: {
+        label: msg("Today's Bookings"),
+        icon_src: wrapPathInSvgWithoutPrefix(mdiCalendarWeekend),
+        view(element, context) {
+          render(
+            wrapAppletView(
+              client,
+              profilesClient,
+              weServices,
+              html`
+                <all-resources-calendar
+                  @resource-selected=${async (e: CustomEvent) => {
+                    const appInfo = await client.appInfo();
+                    const dnaHash = (appInfo.cell_info.bookie[0] as any)[
+                      CellType.Provisioned
+                    ].cell_id[0];
+                    weServices.openViews.openHrl(
+                      [dnaHash, e.detail.resourceHash],
+                      {}
+                    );
+                  }}
+                ></all-resources-calendar>
               `
             ),
             element

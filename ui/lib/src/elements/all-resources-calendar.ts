@@ -4,6 +4,7 @@ import {
   asyncDeriveAndJoin,
   AsyncReadable,
   join,
+  pipe,
   sliceAndJoin,
   StoreSubscriber,
 } from '@holochain-open-dev/stores';
@@ -22,13 +23,14 @@ import { bookieStoreContext } from '../context.js';
 import { Booking, BookingRequest, Resource } from '../types.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
 import { mdiInformationOutline } from '@mdi/js';
+import { ActionHash } from '@holochain/client';
 
 /**
- * @element my-resources-calendar
+ * @element all-resources-calendar
  */
 @localized()
-@customElement('my-resources-calendar')
-export class MyResourcesCalendar extends LitElement {
+@customElement('all-resources-calendar')
+export class AllResourcesCalendar extends LitElement {
   /**
    * @internal
    */
@@ -38,17 +40,17 @@ export class MyResourcesCalendar extends LitElement {
   /**
    * @internal
    */
-  _myResources = new StoreSubscriber(
+  _allResources = new StoreSubscriber(
     this,
     () =>
-      this.bookieStore.resourcesForAgent.get(
-        this.bookieStore.client.client.myPubKey
+      pipe(this.bookieStore.allResources, allResources =>
+        sliceAndJoin(this.bookieStore.resources, allResources)
       ),
     () => []
   );
 
-  renderCalendar(resources: Array<EntryRecord<Resource>>) {
-    if (resources.length === 0)
+  renderCalendar(resources: ReadonlyMap<ActionHash, EntryRecord<Resource>>) {
+    if (resources.size === 0)
       return html` <div class="column center-content" style="margin: 16px">
         <sl-icon
           .src=${wrapPathInSvg(mdiInformationOutline)}
@@ -61,13 +63,14 @@ export class MyResourcesCalendar extends LitElement {
 
     return html`
       <resources-calendar
-        .resourcesHashes=${resources.map(r => r.actionHash)}
+        view="resourceTimeGridDay"
+        .resourcesHashes=${Array.from(resources.keys())}
       ></resources-calendar>
     `;
   }
 
   render() {
-    switch (this._myResources.value.status) {
+    switch (this._allResources.value.status) {
       case 'pending':
         return html`<div
           style="display: flex; flex: 1; align-items: center; justify-content: center"
@@ -75,11 +78,11 @@ export class MyResourcesCalendar extends LitElement {
           <sl-spinner style="font-size: 2rem;"></sl-spinner>
         </div>`;
       case 'complete':
-        return this.renderCalendar(this._myResources.value.value);
+        return this.renderCalendar(this._allResources.value.value);
       case 'error':
         return html`<display-error
           .headline=${msg('Error fetching the resources')}
-          .error=${this._myResources.value.error.data.data}
+          .error=${this._allResources.value.error.data.data}
         ></display-error>`;
     }
   }
