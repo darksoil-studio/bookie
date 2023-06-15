@@ -254,7 +254,7 @@ export class BookingRequestDetail extends LitElement {
                 variant="warning"
                 .loading=${this.cancelling}
                 @click=${() => this.cancelBookingRequest()}
-                >${msg('Cancel')}</sl-button
+                >${msg('Cancel Request')}</sl-button
               >
             `
           : html``}

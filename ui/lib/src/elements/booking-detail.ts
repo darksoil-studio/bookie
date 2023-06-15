@@ -48,8 +48,10 @@ export class BookingDetail extends LitElement {
   /**
    * @internal
    */
-  _booking = new StoreSubscriber(this, () =>
-    this.bookieStore.bookings.get(this.bookingHash)
+  _booking = new StoreSubscriber(
+    this,
+    () => this.bookieStore.bookings.get(this.bookingHash),
+    () => [this.bookingHash]
   );
 
   /**

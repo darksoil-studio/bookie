@@ -41,8 +41,10 @@ export class BookingRequestsForResource extends LitElement {
   /**
    * @internal
    */
-  _bookingRequests = new StoreSubscriber(this, () =>
-    this.bookieStore.bookingRequestsForResource.get(this.resourceHash)
+  _bookingRequests = new StoreSubscriber(
+    this,
+    () => this.bookieStore.bookingRequestsForResource.get(this.resourceHash),
+    () => [this.resourceHash]
   );
 
   renderList(hashes: Array<ActionHash>) {

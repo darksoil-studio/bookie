@@ -36,7 +36,8 @@ export class AllResources extends LitElement {
    */
   _allResources = new StoreSubscriber(
     this,
-    () => this.bookieStore.allResources
+    () => this.bookieStore.allResources,
+    () => []
   );
 
   renderList(hashes: Array<ActionHash>) {

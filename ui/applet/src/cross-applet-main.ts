@@ -70,7 +70,7 @@ export class CrossAppletMain extends LitElement {
                             style="align-items: center; margin-top: 16px"
                           >
                             <span class="title"
-                              >${msg('Upcoming bookings')} ${msg('in')}
+                              >${msg('Upcoming bookings')} ${msg('in')}&nbsp;
                             </span>
                             ${applets
                               .get(appletId)
@@ -102,6 +102,7 @@ export class CrossAppletMain extends LitElement {
       </div>
     `;
   }
+
   render() {
     switch (this.appletsInfo.value.status) {
       case 'pending':

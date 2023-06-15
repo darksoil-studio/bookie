@@ -99,6 +99,7 @@ export class ResourceDetail extends LitElement {
         <div class="row">
           <sl-card style="max-width: 600px; margin-right: 16px">
             <show-image
+              style="max-height: 400px"
               slot="image"
               .imageHash=${entryRecord.entry.image_hash}
             ></show-image>

@@ -36,8 +36,10 @@ export class ResourceSummary extends LitElement {
   /**
    * @internal
    */
-  _resource = new StoreSubscriber(this, () =>
-    this.bookieStore.resources.get(this.resourceHash)
+  _resource = new StoreSubscriber(
+    this,
+    () => this.bookieStore.resources.get(this.resourceHash),
+    () => [this.resourceHash]
   );
 
   renderSummary(entryRecord: EntryRecord<Resource>) {
