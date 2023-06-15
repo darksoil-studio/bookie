@@ -25,6 +25,7 @@ module.exports = {
     "no-case-declarations": "off",
     "import/order": "off",
     "no-console": "off",
-    "arrow-body-style": "off"
+    "arrow-body-style": "off",
+    "no-else-return": "off"
   }
 };

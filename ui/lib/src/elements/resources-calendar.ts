@@ -1,7 +1,6 @@
 import { LitElement, html } from 'lit';
 import { state, customElement, property } from 'lit/decorators.js';
 import {
-  asyncDeriveAndJoin,
   AsyncReadable,
   join,
   sliceAndJoin,
@@ -9,7 +8,7 @@ import {
 } from '@holochain-open-dev/stores';
 import { consume } from '@lit-labs/context';
 import { localized, msg } from '@lit/localize';
-import { sharedStyles, wrapPathInSvg } from '@holochain-open-dev/elements';
+import { sharedStyles } from '@holochain-open-dev/elements';
 
 import '@holochain-open-dev/elements/dist/elements/display-error.js';
 import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
@@ -21,7 +20,6 @@ import { BookieStore } from '../bookie-store.js';
 import { bookieStoreContext } from '../context.js';
 import { Booking, BookingRequest, Resource } from '../types.js';
 import { EntryRecord } from '@holochain-open-dev/utils';
-import { mdiInformationOutline } from '@mdi/js';
 import { ActionHash } from '@holochain/client';
 import {
   bookingRequestToCalendarEvent,

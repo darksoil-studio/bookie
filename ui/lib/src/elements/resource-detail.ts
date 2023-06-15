@@ -143,10 +143,10 @@ export class ResourceDetail extends LitElement {
               </div>
             </div>
           </sl-card>
-        </div>
 
-        <div class="column">
-          <slot name="attachments"></slot>
+          <div class="column">
+            <slot name="attachments"></slot>
+          </div>
         </div>
       </div>
     `;

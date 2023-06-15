@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <style>
+      html,
       body {
         background: #fafafa;
         font-family: Arial, Helvetica, sans-serif;
@@ -17,10 +18,13 @@
     <script type="module">
       import '@shoelace-style/shoelace/dist/themes/light.css';
       import { AppAgentWebsocket } from '@holochain/client';
-      import { fakeEntryHash } from '@holochain-open-dev/utils';
-      import { ProfilesClient } from '@holochain-open-dev/profiles';
-      import { ProfilesZomeMock } from "@holochain-open-dev/profiles/dist/mocks.js";
-      import { weServicesMock } from "@lightningrodlabs/we-applet/dist/mocks.js";
+      import { fakeEntryHash, HoloHashMap } from '@holochain-open-dev/utils';
+      import {
+        ProfilesClient,
+        ProfilesStore,
+      } from '@holochain-open-dev/profiles';
+      import { ProfilesZomeMock } from '@holochain-open-dev/profiles/dist/mocks.js';
+      import { weServicesMock } from '@lightningrodlabs/we-applet/dist/mocks.js';
 
       import Applet from '../src/index.ts';
 
@@ -35,7 +39,24 @@
         );
         views.main(document.body);
       }
-      setup();
+
+      async function setupCrossAppletMain() {
+        const appWs = await AppAgentWebsocket.connect(``, '');
+
+        const client = new ProfilesClient(appWs, 'bookie');
+        const store = new ProfilesStore(client);
+
+        const map = new HoloHashMap();
+        map.set(fakeEntryHash(), {
+          appletClient: appWs,
+          profilesClient: client,
+        });
+        (await Applet.crossAppletViews(map, weServicesMock)).main(
+          document.body
+        );
+      }
+
+      setupCrossAppletMain();
     </script>
   </body>
 </html>

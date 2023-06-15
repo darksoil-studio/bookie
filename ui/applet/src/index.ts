@@ -79,7 +79,7 @@ function wrapAppletView(
 function bookingRequestIconByStatus(status: RequestStatus) {
   if (status.status === 'pending') return mdiCalendarQuestion;
   else if (status.status === 'accepted') return mdiCalendarCheck;
-  else return mdiCalendarRemove;
+  return mdiCalendarRemove;
 }
 
 async function appletViews(
@@ -249,7 +249,7 @@ async function appletViews(
                   profilesClient,
                   weServices,
                   html`
-                    <resource-detail .resourceHash=${hrl[1]}>
+                    <resource-detail .resourceHash=${hrl[1]} style="flex: 1">
                       <attachments-card
                         slot="attachments"
                         .hash=${hrl[1]}
